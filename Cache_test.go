@@ -660,7 +660,14 @@ func Test_cache_Keys(t *testing.T) {
 				cacheLRU: tt.fields.cacheLRU,
 				capacity: tt.fields.capacity,
 			}
-			if got := c.Keys(); !reflect.DeepEqual(got, tt.want) {
+			got := c.Keys()
+			sort.Slice(got, func(i, j int) bool {
+				return got[i].String() < got[j].String()
+			})
+			sort.Slice(tt.want, func(i, j int) bool {
+				return tt.want[i].String() < tt.want[j].String()
+			})
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Keys() = %v, want %v", got, tt.want)
 			}
 		})
@@ -928,6 +935,62 @@ func Test_cache_Resize(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
 				t.Errorf("Resize() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func Test_cache_IsFull(t *testing.T) {
+	type fields struct {
+		cacheMap map[string]Entry
+		cacheLRU *list.List
+		capacity uint32
+	}
+
+	var e1a = NewEntry(NewStringKey("A"), "A entry", Second(10), Second(15))
+	var e1b = NewEntry(NewStringKey("B"), "B entry", Second(10), Second(15))
+	var e1c = NewEntry(NewStringKey("C"), "C entry", Second(10), Second(15))
+	var e1d = NewEntry(NewStringKey("D"), "D entry", Second(10), Second(15))
+
+	var e2a = NewEntry(NewStringKey("A"), "A entry", Second(10), Second(15))
+	var e2b = NewEntry(NewStringKey("B"), "B entry", Second(10), Second(15))
+	var e2c = NewEntry(NewStringKey("C"), "C entry", Second(10), Second(15))
+	var e2d = NewEntry(NewStringKey("D"), "D entry", Second(10), Second(15))
+
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "Cache is full",
+			fields: fields{
+				cacheMap: map[string]Entry{"A": e1a, "B": e1b, "C": e1c, "D": e1d},
+				cacheLRU: feedLRU(e1a, e1b, e1c, e1d),
+				capacity: 4,
+			},
+			want: true,
+		},
+		{
+			name: "Cache is not full",
+			fields: fields{
+				cacheMap: map[string]Entry{"A": e2a, "B": e2b, "C": e2c, "D": e2d},
+				cacheLRU: feedLRU(e2a, e2b, e2c, e2d),
+				capacity: 16,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &cache{
+				cacheMap: tt.fields.cacheMap,
+				cacheLRU: tt.fields.cacheLRU,
+				capacity: tt.fields.capacity,
+			}
+
+			if got := c.IsFull(); got != tt.want {
+				t.Errorf("IsFull() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

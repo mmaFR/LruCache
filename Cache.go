@@ -145,6 +145,15 @@ func (c *cache) HouseCleaning() (uint32, []Entry) {
 	return numberOfDeletions, flushedEntry
 }
 
+// IsFull returns true if the cache reaches its maximum capacity
+func (c *cache) IsFull() bool {
+	if c.Len() == c.capacity {
+		return true
+	} else {
+		return false
+	}
+}
+
 func NewCache(size uint32) Cache {
 	var nc = new(cache)
 	nc.cacheMap = make(map[string]Entry, size)

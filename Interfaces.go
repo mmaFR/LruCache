@@ -50,6 +50,9 @@ type Cache interface {
 	// HouseCleaning triggers the cache cleaning and removes the entries expired.
 	// It returns the number of flushed entries and the slice of them.
 	HouseCleaning() (uint32, []Entry)
+
+	// IsFull returns true if the cache reaches its maximum capacity
+	IsFull() bool
 }
 
 // Entry is the cache entry interface.
