@@ -2,6 +2,7 @@ package LruCache
 
 import "container/list"
 
+// cache is a cache object
 type cache struct {
 	cacheMap map[string]Entry
 	cacheLRU *list.List
